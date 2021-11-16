@@ -34,7 +34,6 @@ namespace Tarau_Bianca_Lab5
     {
         ActionState action = ActionState.Nothing;
         AutoLotEntitiesModel ctx = new AutoLotEntitiesModel();
-        AutoLotEntitiesModel itx = new AutoLotEntitiesModel();
         CollectionViewSource customerVSource;
         CollectionViewSource inventoryVSource;
         CollectionViewSource customerOrdersVSource;
@@ -71,8 +70,8 @@ namespace Tarau_Bianca_Lab5
             cmbInventory.SelectedValuePath = "CarId";
 
             inventoryVSource = ((System.Windows.Data.CollectionViewSource)(this.FindResource("inventoryViewSource")));
-            inventoryVSource.Source = itx.Inventories.Local;
-            itx.Inventories.Load();
+            inventoryVSource.Source = ctx.Inventories.Local;
+            ctx.Inventories.Load();
 
 
 
@@ -82,11 +81,19 @@ namespace Tarau_Bianca_Lab5
         private void btnAdd_Click(object sender, RoutedEventArgs e)
         {
             action = ActionState.New;
+
+            BindingOperations.ClearBinding(firstNameTextBox, TextBox.TextProperty);
+            BindingOperations.ClearBinding(lastNameTextBox, TextBox.TextProperty);
+            SetValidationBinding();
         }
 
         private void btnEdit_Click(object sender, RoutedEventArgs e)
         {
             action = ActionState.Edit;
+
+            BindingOperations.ClearBinding(firstNameTextBox, TextBox.TextProperty);
+            BindingOperations.ClearBinding(lastNameTextBox, TextBox.TextProperty);
+            SetValidationBinding();
         }
 
         private void btnDelete_Click(object sender, RoutedEventArgs e)
@@ -186,10 +193,10 @@ namespace Tarau_Bianca_Lab5
                         Make = makeTextBox.Text.Trim()
                     };
                     //adaugam entitatea nou creata in context
-                    itx.Inventories.Add(inventory);
+                    ctx.Inventories.Add(inventory);
                     inventoryVSource.View.Refresh();
                     //salvam modificarile
-                    itx.SaveChanges();
+                    ctx.SaveChanges();
                 }
                 //using System.Data;
                 catch (DataException ex)
@@ -206,7 +213,7 @@ namespace Tarau_Bianca_Lab5
                     inventory.Color = colorTextBox.Text.Trim();
                     inventory.Make = makeTextBox.Text.Trim();
                     //salvam modificarile
-                    itx.SaveChanges();
+                    ctx.SaveChanges();
                 }
                 catch (DataException ex)
                 {
@@ -218,8 +225,8 @@ namespace Tarau_Bianca_Lab5
                 try
                 {
                     inventory = (Inventory)inventoryDataGrid.SelectedItem;
-                    itx.Inventories.Remove(inventory);
-                    itx.SaveChanges();
+                    ctx.Inventories.Remove(inventory);
+                    ctx.SaveChanges();
                 }
                 catch (DataException ex)
                 {
@@ -274,6 +281,7 @@ namespace Tarau_Bianca_Lab5
                     SaveInventory();
                     break;
                 case "Orders":
+                    SaveOrders();
                     break;
             }
             ReInitialize();
@@ -372,6 +380,33 @@ namespace Tarau_Bianca_Lab5
                                  inv.Color
                              };
             customerOrdersVSource.Source = queryOrder.ToList();
+        }
+
+        private void SetValidationBinding()
+        {
+            Binding firstNameValidationBinding = new Binding();
+            firstNameValidationBinding.Source = customerVSource;
+            firstNameValidationBinding.Path = new PropertyPath("FirstName");
+            firstNameValidationBinding.NotifyOnValidationError = true;
+            firstNameValidationBinding.Mode = BindingMode.TwoWay;
+            firstNameValidationBinding.UpdateSourceTrigger =
+           UpdateSourceTrigger.PropertyChanged;
+            //string required
+            firstNameValidationBinding.ValidationRules.Add(new StringNotEmpty());
+            firstNameTextBox.SetBinding(TextBox.TextProperty,
+           firstNameValidationBinding);
+            Binding lastNameValidationBinding = new Binding();
+            lastNameValidationBinding.Source = customerVSource;
+            lastNameValidationBinding.Path = new PropertyPath("LastName");
+            lastNameValidationBinding.NotifyOnValidationError = true;
+            lastNameValidationBinding.Mode = BindingMode.TwoWay;
+            lastNameValidationBinding.UpdateSourceTrigger =
+           UpdateSourceTrigger.PropertyChanged;
+            //string min length validator
+            lastNameValidationBinding.ValidationRules.Add(new
+           StringMinLengthValidator());
+            lastNameTextBox.SetBinding(TextBox.TextProperty,
+           lastNameValidationBinding); //setare binding nou
         }
 
     }
